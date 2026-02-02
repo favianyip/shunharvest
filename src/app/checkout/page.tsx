@@ -55,11 +55,11 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           items: items.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.salePrice || item.product.price,
             quantity: item.quantity,
-            image: item.images?.[0] ? `${window.location.origin}${item.images[0]}` : undefined,
+            image: item.product.images?.[0] ? `${window.location.origin}${item.product.images[0]}` : undefined,
           })),
           customerEmail: email,
         }),
@@ -109,12 +109,12 @@ export default function CheckoutPage() {
           <h2 className="text-2xl font-serif text-stone-900 mb-6">Order Summary</h2>
           <div className="space-y-4 mb-6">
             {items.map((item) => (
-              <div key={item.id} className="flex gap-4 p-4 bg-stone-50 rounded-lg">
+              <div key={item.product.id} className="flex gap-4 p-4 bg-stone-50 rounded-lg">
                 <div className="w-20 h-20 bg-stone-200 rounded overflow-hidden flex-shrink-0">
-                  {item.images?.[0] ? (
+                  {item.product.images?.[0] ? (
                     <Image
-                      src={item.images[0]}
-                      alt={item.name}
+                      src={item.product.images[0]}
+                      alt={item.product.name}
                       width={80}
                       height={80}
                       className="w-full h-full object-cover"
@@ -124,9 +124,9 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-stone-900">{item.name}</h3>
+                  <h3 className="font-medium text-stone-900">{item.product.name}</h3>
                   <p className="text-sm text-stone-600">Qty: {item.quantity}</p>
-                  <p className="font-medium text-stone-900">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-medium text-stone-900">${((item.product.salePrice || item.product.price) * item.quantity).toFixed(2)}</p>
                 </div>
               </div>
             ))}

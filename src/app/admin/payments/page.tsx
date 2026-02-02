@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import AdminLayout from '../components/AdminLayout';
 import { CreditCard, QrCode, Save, Upload, Check, X, Loader2 } from 'lucide-react';
 import { PaymentSettings } from '@/types';
 
@@ -73,7 +72,6 @@ export default function PaymentsPage() {
   };
 
   return (
-    <AdminLayout>
       <div className="max-w-4xl">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -318,6 +316,5 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com`}
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }
