@@ -1,11 +1,66 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
-import { products, banners, categories } from '@/data/mockData';
+import { getProducts, getCategories, getBanners } from '@/lib/firebase/firestore';
+import { Product, Category, Banner } from '@/types';
+import { Loader2 } from 'lucide-react';
+
+// Fallback banners if none in Firebase
+const defaultBanners: Banner[] = [
+  {
+    id: '1',
+    title: 'Premium Japanese Fruits',
+    subtitle: 'Fresh from Japan',
+    description: 'Experience the finest seasonal fruits, delivered to your door.',
+    image: '/images/hero-1.jpg',
+    link: '/shop',
+    linkText: 'Shop Now',
+    order: 1,
+    isActive: true,
+  }
+];
 
 export default function HomePage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [banners, setBanners] = useState<Banner[]>(defaultBanners);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [productsData, categoriesData, bannersData] = await Promise.all([
+          getProducts(),
+          getCategories(),
+          getBanners()
+        ]);
+        setProducts(productsData);
+        setCategories(categoriesData);
+        if (bannersData.length > 0) {
+          setBanners(bannersData);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-700" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -61,46 +116,57 @@ export default function HomePage() {
               View All →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-stone-500">
+              <p>No featured products yet.</p>
+              <Link href="/admin/products" className="text-amber-700 hover:underline mt-2 inline-block">
+                Add products in admin panel →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 md:py-24 bg-stone-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="font-serif text-2xl md:text-3xl text-stone-900 mb-8 text-center">
-            Shop by Category
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/shop/${category.slug}`}
-                className="group relative aspect-square rounded-lg overflow-hidden bg-amber-100"
-              >
-                {category.image && (
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-900/70 to-transparent" />
-                <div className="absolute inset-0 flex items-end p-4">
-                  <span className="text-white font-medium group-hover:text-amber-300 transition-colors">
-                    {category.name}
-                  </span>
-                </div>
-              </Link>
-            ))}
+      {categories.length > 0 && (
+        <section className="py-16 md:py-24 bg-stone-50">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <h2 className="font-serif text-2xl md:text-3xl text-stone-900 mb-8 text-center">
+              Shop by Category
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/shop/${category.slug}`}
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-amber-100"
+                >
+                  {category.image && (
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-900/70 to-transparent" />
+                  <div className="absolute inset-0 flex items-end p-4">
+                    <span className="text-white font-medium group-hover:text-amber-300 transition-colors">
+                      {category.name}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Quality Promise */}
       <section className="py-16 md:py-24">
