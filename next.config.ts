@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       'cdn.shopify.com',
       'firebasestorage.googleapis.com',
     ],
-    unoptimized: true, // For static export compatibility
+    unoptimized: true,
   },
 };
 
