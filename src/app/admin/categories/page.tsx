@@ -1,31 +1,70 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, Edit2, Trash2, Upload, ImageIcon } from 'lucide-react';
-import { categories as initialCategories } from '@/data/mockData';
+import { Plus, Edit2, Trash2, Upload, ImageIcon, Loader2 } from 'lucide-react';
+import { getCategories, addCategory, updateCategory, deleteCategory } from '@/lib/firebase/firestore';
 import { Category } from '@/types';
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const handleDelete = (categoryId: string) => {
-    if (confirm('Are you sure you want to delete this category? Products in this category will need to be reassigned.')) {
-      setCategories(categories.filter(c => c.id !== categoryId));
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSave = (updatedCategory: Category) => {
-    if (editingCategory) {
-      setCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
-    } else {
-      setCategories([...categories, { ...updatedCategory, id: Date.now().toString() }]);
+  const handleDelete = async (categoryId: string) => {
+    if (confirm('Are you sure you want to delete this category? Products in this category will need to be reassigned.')) {
+      try {
+        await deleteCategory(categoryId);
+        setCategories(categories.filter(c => c.id !== categoryId));
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Failed to delete category');
+      }
     }
-    setShowModal(false);
-    setEditingCategory(null);
   };
+
+  const handleSave = async (categoryData: Partial<Category>) => {
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, categoryData);
+        setCategories(categories.map(c => 
+          c.id === editingCategory.id ? { ...c, ...categoryData } : c
+        ));
+      } else {
+        const newId = await addCategory(categoryData as Omit<Category, 'id'>);
+        setCategories([...categories, { ...categoryData, id: newId, createdAt: new Date() } as Category]);
+      }
+      setShowModal(false);
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Error saving category:', error);
+      alert('Failed to save category');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-700" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -122,7 +161,7 @@ export default function AdminCategoriesPage() {
 
 interface CategoryModalProps {
   category: Category | null;
-  onSave: (category: Category) => void;
+  onSave: (category: Partial<Category>) => void;
   onClose: () => void;
 }
 
@@ -137,6 +176,7 @@ function CategoryModal({ category, onSave, onClose }: CategoryModalProps) {
     }
   );
   const [imagePreview, setImagePreview] = useState<string | null>(category?.image || null);
+  const [imageUrl, setImageUrl] = useState<string>(category?.image || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,8 +187,17 @@ function CategoryModal({ category, onSave, onClose }: CategoryModalProps) {
         const base64 = reader.result as string;
         setImagePreview(base64);
         setFormData({ ...formData, image: base64 });
+        setImageUrl('');
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUrlChange = (url: string) => {
+    setImageUrl(url);
+    if (url) {
+      setImagePreview(url);
+      setFormData({ ...formData, image: url });
     }
   };
 
@@ -156,10 +205,8 @@ function CategoryModal({ category, onSave, onClose }: CategoryModalProps) {
     e.preventDefault();
     onSave({
       ...formData,
-      id: category?.id || '',
       image: imagePreview || '',
-      createdAt: category?.createdAt || new Date(),
-    } as Category);
+    });
   };
 
   const handleNameChange = (name: string) => {
@@ -194,6 +241,7 @@ function CategoryModal({ category, onSave, onClose }: CategoryModalProps) {
                     alt="Category preview"
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -217,14 +265,20 @@ function CategoryModal({ category, onSave, onClose }: CategoryModalProps) {
                   <Upload className="w-4 h-4" />
                   Upload Image
                 </button>
-                <p className="text-xs text-stone-500 mt-2">
-                  Recommended: 800x600px JPG or PNG
-                </p>
+                <p className="text-xs text-stone-500 mt-2">Or paste image URL:</p>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => handleImageUrlChange(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full mt-1 px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
                 {imagePreview && (
                   <button
                     type="button"
                     onClick={() => {
                       setImagePreview(null);
+                      setImageUrl('');
                       setFormData({ ...formData, image: '' });
                     }}
                     className="text-xs text-red-600 hover:text-red-700 mt-2"
