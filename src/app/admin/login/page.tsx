@@ -108,12 +108,6 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials hint */}
-          <div className="mt-6 p-4 bg-stone-50 rounded-lg">
-            <p className="text-xs text-stone-500 text-center">
-              Demo credentials: <span className="font-mono">admin</span> / <span className="font-mono">admin123</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>
