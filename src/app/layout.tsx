@@ -31,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="font-sans antialiased bg-white text-stone-900">
+      <body className="font-sans antialiased bg-white text-stone-900 overflow-x-hidden">
         <CartProvider>
           <Header />
           <main className="min-h-screen">{children}</main>

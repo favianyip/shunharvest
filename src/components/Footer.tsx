@@ -61,8 +61,8 @@ export default function Footer() {
       </div>
 
       {/* Main Footer */}
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:px-8 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
           {/* Logo */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/">

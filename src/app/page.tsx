@@ -63,7 +63,7 @@ export default function HomePage() {
   }
 
   return (
-    <div>
+    <div className="overflow-x-hidden">
       {/* Hero Slider */}
       <HeroSlider banners={banners} />
 
