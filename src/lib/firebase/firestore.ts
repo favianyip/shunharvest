@@ -176,21 +176,28 @@ export async function updateOrder(id: string, data: Partial<Order>): Promise<voi
 
 // Banners
 export async function getBanners(): Promise<Banner[]> {
-  const q = query(bannersRef, where('isActive', '==', true), orderBy('order', 'asc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
+  // Fetch all banners and filter/sort client-side to avoid composite index requirement
+  const snapshot = await getDocs(bannersRef);
+  const banners = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as Banner[];
+  
+  // Filter active and sort by order
+  return banners
+    .filter(b => b.isActive)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 export async function getAllBanners(): Promise<Banner[]> {
-  const q = query(bannersRef, orderBy('order', 'asc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
+  // Fetch all and sort client-side to avoid index requirement
+  const snapshot = await getDocs(bannersRef);
+  const banners = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as Banner[];
+  
+  return banners.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 export async function addBanner(banner: Omit<Banner, 'id'>): Promise<string> {
