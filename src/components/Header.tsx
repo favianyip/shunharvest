@@ -46,8 +46,8 @@ export default function Header() {
   const { totalItems, toggleCart } = useCart();
 
   return (
-    <header className="bg-white sticky top-0 z-50 border-b border-stone-200 overflow-hidden">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8 overflow-hidden">
+    <header className="bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-stone-100 overflow-hidden">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 lg:px-8 overflow-hidden">
         {/* Logo */}
         <div className="flex lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-3">

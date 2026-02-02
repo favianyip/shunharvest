@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingBag } from 'lucide-react';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 
@@ -22,15 +22,15 @@ export default function ProductCard({ product }: ProductCardProps) {
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(
-          <Star key={i} className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+          <Star key={i} className="h-3 w-3 fill-amber-500 text-amber-500" />
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
-          <Star key={i} className="h-3.5 w-3.5 fill-amber-500/50 text-amber-500" />
+          <Star key={i} className="h-3 w-3 fill-amber-500/50 text-amber-500" />
         );
       } else {
         stars.push(
-          <Star key={i} className="h-3.5 w-3.5 text-stone-300" />
+          <Star key={i} className="h-3 w-3 text-stone-200" />
         );
       }
     }
@@ -38,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative bg-white">
+    <div className="group relative bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-500">
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-stone-50">
         <Link href={`/product/${product.id}`}>
@@ -48,94 +48,102 @@ export default function ProductCard({ product }: ProductCardProps) {
                 src={product.images[0]}
                 alt={product.name}
                 fill
-                className={`object-cover transition-transform duration-300 ${
-                  isOutOfStock ? 'opacity-50' : 'group-hover:scale-105'
+                className={`object-cover transition-all duration-700 ${
+                  isOutOfStock ? 'opacity-50 grayscale' : 'group-hover:scale-105'
                 }`}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-amber-50">
-                <span className="text-amber-700 text-6xl">🍓</span>
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-stone-100">
+                <span className="text-amber-700/30 text-6xl font-serif">旬</span>
               </div>
             )}
           </div>
         </Link>
         
-        {/* SOLD OUT Badge - Large overlay style like original */}
+        {/* SOLD OUT Badge - Elegant overlay */}
         {isOutOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-stone-900/80 text-white text-sm font-medium px-6 py-2 tracking-wider">
-              SOLD OUT
+          <div className="absolute inset-0 flex items-center justify-center bg-stone-900/40 backdrop-blur-[2px]">
+            <div className="bg-white/90 text-stone-900 text-xs font-medium px-6 py-2.5 tracking-widest uppercase">
+              Sold Out
             </div>
           </div>
         )}
 
-        {/* NEW Badge */}
+        {/* NEW Badge - Premium style */}
         {product.isNew && !isOutOfStock && (
-          <div className="absolute top-3 left-3 bg-amber-700 text-white text-xs font-medium px-3 py-1">
-            NEW
+          <div className="absolute top-4 left-4">
+            <span className="bg-amber-700 text-white text-[10px] font-medium px-3 py-1.5 tracking-wider uppercase">
+              New Arrival
+            </span>
           </div>
         )}
 
-        {/* Quick Add Button - only show if in stock */}
+        {/* Quick Add Button - Elegant */}
         {!isOutOfStock && (
           <button
-            onClick={() => addItem(product)}
-            className="absolute bottom-3 right-3 p-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-stone-100"
+            onClick={(e) => {
+              e.preventDefault();
+              addItem(product);
+            }}
+            className="absolute bottom-4 right-4 p-3 bg-white/90 backdrop-blur rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-amber-700 hover:text-white transform translate-y-2 group-hover:translate-y-0"
             aria-label="Add to cart"
           >
-            <ShoppingCart className="h-5 w-5 text-stone-700" />
+            <ShoppingBag className="h-5 w-5" />
           </button>
         )}
       </div>
 
       {/* Product Info */}
-      <div className="pt-4 pb-2">
+      <div className="p-5">
         <Link href={`/product/${product.id}`}>
-          <h3 className="text-base font-medium text-stone-900 hover:text-amber-700 transition-colors leading-tight">
+          <h3 className="text-base font-medium text-stone-900 hover:text-amber-700 transition-colors leading-tight line-clamp-2">
             {product.name}
           </h3>
         </Link>
         
-        <p className="mt-1 text-sm text-stone-600">{product.farmName}</p>
-        <p className="text-sm text-stone-500">{product.location}</p>
+        <div className="mt-2 flex items-center gap-2 text-sm text-stone-500">
+          <span>{product.farmName}</span>
+          {product.location && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-stone-300"></span>
+              <span>{product.location}</span>
+            </>
+          )}
+        </div>
 
         {/* Price */}
-        <div className="mt-2">
+        <div className="mt-3">
           {product.salePrice ? (
-            <div className="flex items-center gap-2">
-              <span className="text-base font-medium text-stone-900">
-                From ${product.salePrice.toFixed(0)}
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-semibold text-stone-900">
+                ${product.salePrice.toFixed(0)}
               </span>
               <span className="text-sm text-stone-400 line-through">
                 ${product.price.toFixed(0)}
               </span>
             </div>
           ) : (
-            <span className="text-base font-medium text-stone-900">
+            <span className="text-lg font-semibold text-stone-900">
               From ${product.price.toFixed(0)}
             </span>
           )}
         </div>
 
-        {/* Order deadline or Currently unavailable */}
-        <div className="mt-2">
-          {isOutOfStock ? (
-            <p className="text-xs text-stone-500">Currently unavailable</p>
-          ) : product.orderDeadline ? (
-            <p className="text-xs text-stone-600">
-              Order deadline: {product.orderDeadline}
-            </p>
-          ) : null}
-        </div>
+        {/* Order deadline */}
+        {!isOutOfStock && product.orderDeadline && (
+          <p className="mt-2 text-xs text-amber-700 font-medium">
+            Order by {product.orderDeadline}
+          </p>
+        )}
 
         {/* Rating */}
         {product.rating && product.rating > 0 && (
-          <div className="mt-2 flex items-center gap-1">
+          <div className="mt-3 flex items-center gap-1.5">
             <div className="flex">
               {renderStars(product.rating)}
             </div>
             {product.reviewCount && product.reviewCount > 0 && (
-              <span className="text-xs text-stone-500 ml-1">
+              <span className="text-xs text-stone-400">
                 ({product.reviewCount})
               </span>
             )}
