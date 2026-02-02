@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
-import { products, categories } from '@/data/mockData';
+import { getProducts, getCategories } from '@/lib/firebase/firestore';
+import { Product, Category } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 type SortOption = 'featured' | 'price-low' | 'price-high' | 'name-asc' | 'name-desc' | 'newest';
 type AvailabilityFilter = 'all' | 'in-stock' | 'out-of-stock';
@@ -23,15 +24,36 @@ export default function CategoryPage() {
   const params = useParams();
   const categorySlug = params.category as string;
   
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [availability, setAvailability] = useState<AvailabilityFilter>('all');
+  const [priceRange, setPriceRange] = useState<string>('all');
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(productsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
   const category = categories.find(c => c.slug === categorySlug);
   const categoryProducts = products.filter(p => {
     const cat = categories.find(c => c.id === p.categoryId);
     return cat?.slug === categorySlug;
   });
-
-  const [sortBy, setSortBy] = useState<SortOption>('featured');
-  const [availability, setAvailability] = useState<AvailabilityFilter>('all');
-  const [priceRange, setPriceRange] = useState<string>('all');
 
   const sortedProducts = useMemo(() => {
     let sorted = [...categoryProducts];
@@ -64,9 +86,11 @@ export default function CategoryPage() {
         sorted.sort((a, b) => b.name.localeCompare(a.name));
         break;
       case 'newest':
-        sorted.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        sorted.sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+          const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
+        });
         break;
       case 'featured':
       default:
@@ -76,6 +100,17 @@ export default function CategoryPage() {
 
     return sorted;
   }, [categoryProducts, sortBy, availability, priceRange]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-amber-700 mx-auto" />
+          <p className="mt-4 text-stone-500 font-light tracking-wide">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!category) {
     return (
