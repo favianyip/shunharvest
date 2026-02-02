@@ -68,24 +68,24 @@ export default function HomePage() {
       <HeroSlider banners={banners} />
 
       {/* Featured By Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section className="py-12 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-center text-sm uppercase tracking-widest text-stone-500 mb-8">
             Featured By
           </h2>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 text-stone-400">
-            <span className="text-xl font-serif">Bloomberg</span>
-            <span className="text-xl font-serif">Business Insider</span>
-            <span className="text-xl font-serif">The Wall Street Journal</span>
-            <span className="text-xl font-serif">Microsoft Start</span>
-            <span className="text-xl font-serif">The New York Times</span>
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-12 text-stone-400">
+            <span className="text-base sm:text-xl font-serif">Bloomberg</span>
+            <span className="text-base sm:text-xl font-serif">Business Insider</span>
+            <span className="text-base sm:text-xl font-serif whitespace-nowrap">The Wall Street Journal</span>
+            <span className="text-base sm:text-xl font-serif">Microsoft Start</span>
+            <span className="text-base sm:text-xl font-serif whitespace-nowrap">The New York Times</span>
           </div>
         </div>
       </section>
 
       {/* Welcome Section */}
-      <section className="py-16 md:py-24 bg-stone-50">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+      <section className="py-16 md:py-24 bg-stone-50 overflow-hidden">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 mb-6">
             In harmony with nature.
           </h2>
@@ -103,8 +103,8 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section className="py-16 md:py-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="font-serif text-2xl md:text-3xl text-stone-900">
               Featured Fruits
@@ -135,8 +135,8 @@ export default function HomePage() {
 
       {/* Categories Section */}
       {categories.length > 0 && (
-        <section className="py-16 md:py-24 bg-stone-50">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <section className="py-16 md:py-24 bg-stone-50 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="font-serif text-2xl md:text-3xl text-stone-900 mb-8 text-center">
               Shop by Category
             </h2>
@@ -169,8 +169,8 @@ export default function HomePage() {
       )}
 
       {/* Quality Promise */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section className="py-16 md:py-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
@@ -198,15 +198,15 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="py-16 md:py-24 bg-amber-700">
-        <div className="max-w-xl mx-auto px-6 lg:px-8 text-center">
+      <section className="py-16 md:py-24 bg-amber-700 overflow-hidden">
+        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-serif text-2xl md:text-3xl text-white mb-4">
             Sign up for our newsletter!
           </h2>
           <p className="text-amber-100 mb-8">
             Don&apos;t miss out on special discounts, promotions and newly curated fruits in season.
           </p>
-          <form className="flex gap-2 max-w-md mx-auto">
+          <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
             <input
               type="email"
               placeholder="email@example.com"
@@ -214,7 +214,7 @@ export default function HomePage() {
             />
             <button
               type="submit"
-              className="px-6 py-3 bg-stone-900 text-white font-medium rounded hover:bg-stone-800 transition-colors"
+              className="px-6 py-3 bg-stone-900 text-white font-medium rounded hover:bg-stone-800 transition-colors whitespace-nowrap"
             >
               Subscribe
             </button>

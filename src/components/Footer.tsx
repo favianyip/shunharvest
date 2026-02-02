@@ -31,10 +31,10 @@ const footerNavigation = {
 
 export default function Footer() {
   return (
-    <footer className="bg-stone-100">
+    <footer className="bg-stone-100 overflow-hidden">
       {/* CTA Section */}
-      <div className="border-b border-stone-200">
-        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+      <div className="border-b border-stone-200 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="text-center md:text-left">
               <h3 className="text-lg font-medium text-stone-900">FAQ</h3>
@@ -140,15 +140,15 @@ export default function Footer() {
               <h4 className="text-sm font-semibold text-stone-900 uppercase tracking-wider">
                 Newsletter
               </h4>
-              <form className="mt-4 flex gap-2">
+              <form className="mt-4 flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
                   placeholder="email@example.com"
-                  className="flex-1 px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400"
+                  className="flex-1 min-w-0 px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-stone-900 text-white text-sm hover:bg-stone-800 transition-colors"
+                  className="px-4 py-2 bg-stone-900 text-white text-sm hover:bg-stone-800 transition-colors whitespace-nowrap shrink-0"
                 >
                   Subscribe
                 </button>
@@ -169,8 +169,8 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-stone-200">
-        <div className="mx-auto max-w-7xl px-6 py-4 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="border-t border-stone-200 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-stone-600">© 2026 Shun Harvest (旬). All rights reserved.</p>
           <div className="flex gap-4">
             {footerNavigation.legal.map((item) => (

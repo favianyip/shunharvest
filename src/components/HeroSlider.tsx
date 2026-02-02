@@ -29,7 +29,7 @@ export default function HeroSlider({ banners }: HeroSliderProps) {
   if (banners.length === 0) return null;
 
   return (
-    <div className="relative w-full h-[600px] md:h-[700px] overflow-hidden bg-stone-800">
+    <div className="relative w-full h-[500px] sm:h-[600px] md:h-[700px] overflow-hidden bg-stone-800">
       {/* Slides */}
       {banners.map((banner, index) => (
         <div
@@ -53,8 +53,8 @@ export default function HeroSlider({ banners }: HeroSliderProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-stone-900/60 to-transparent" />
           
           {/* Content */}
-          <div className="relative h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
-            <div className="max-w-xl text-white">
+          <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center overflow-hidden">
+            <div className="max-w-xl text-white overflow-hidden">
               {banner.subtitle && (
                 <p className="text-sm uppercase tracking-widest mb-4 text-amber-300">
                   {banner.subtitle}
