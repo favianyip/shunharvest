@@ -1,17 +1,45 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, Search, Edit2, Trash2, Upload, X, ImageIcon } from 'lucide-react';
-import { products as initialProducts, categories } from '@/data/mockData';
-import { Product } from '@/types';
+import { Plus, Search, Edit2, Trash2, Upload, X, ImageIcon, Loader2 } from 'lucide-react';
+import { Product, Category } from '@/types';
+import { 
+  getProducts, 
+  addProduct, 
+  updateProduct, 
+  deleteProduct as deleteProductFromDb,
+  getCategories 
+} from '@/lib/firebase/firestore';
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  // Load data from Firebase
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(productsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('Failed to load data from Firebase. Check console for details.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -20,21 +48,47 @@ export default function AdminProductsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleDelete = (productId: string) => {
+  const handleDelete = async (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== productId));
+      try {
+        await deleteProductFromDb(productId);
+        setProducts(products.filter(p => p.id !== productId));
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Failed to delete product');
+      }
     }
   };
 
-  const handleSave = (updatedProduct: Product) => {
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-    } else {
-      setProducts([...products, { ...updatedProduct, id: Date.now().toString() }]);
+  const handleSave = async (productData: Partial<Product>) => {
+    try {
+      if (editingProduct) {
+        // Update existing product
+        await updateProduct(editingProduct.id, productData);
+        setProducts(products.map(p => 
+          p.id === editingProduct.id ? { ...p, ...productData } : p
+        ));
+      } else {
+        // Add new product
+        const newId = await addProduct(productData as Omit<Product, 'id'>);
+        setProducts([...products, { ...productData, id: newId, createdAt: new Date() } as Product]);
+      }
+      setShowModal(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Failed to save product. Check console for details.');
     }
-    setShowModal(false);
-    setEditingProduct(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-700" />
+        <span className="ml-2 text-stone-600">Loading products...</span>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -112,7 +166,7 @@ export default function AdminProductsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0">
-                          {product.images[0] ? (
+                          {product.images?.[0] ? (
                             <Image
                               src={product.images[0]}
                               alt={product.name}
@@ -186,7 +240,7 @@ export default function AdminProductsPage() {
         </div>
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 text-stone-500">
-            No products found
+            {products.length === 0 ? 'No products yet. Add your first product!' : 'No products found'}
           </div>
         )}
       </div>
@@ -195,6 +249,7 @@ export default function AdminProductsPage() {
       {showModal && (
         <ProductModal
           product={editingProduct}
+          categories={categories}
           onSave={handleSave}
           onClose={() => {
             setShowModal(false);
@@ -208,18 +263,19 @@ export default function AdminProductsPage() {
 
 interface ProductModalProps {
   product: Product | null;
-  onSave: (product: Product) => void;
+  categories: Category[];
+  onSave: (product: Partial<Product>) => void;
   onClose: () => void;
 }
 
-function ProductModal({ product, onSave, onClose }: ProductModalProps) {
+function ProductModal({ product, categories, onSave, onClose }: ProductModalProps) {
   const [formData, setFormData] = useState<Partial<Product>>(
     product || {
       name: '',
       sku: '',
       description: '',
       price: 0,
-      categoryId: 'strawberries',
+      categoryId: categories[0]?.id || '',
       farmName: '',
       location: '',
       inventory: 0,
@@ -233,6 +289,7 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
     }
   );
   const [imagePreviews, setImagePreviews] = useState<string[]>(product?.images || []);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,14 +318,17 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      id: product?.id || '',
-      createdAt: product?.createdAt || new Date(),
-      images: imagePreviews,
-    } as Product);
+    setSaving(true);
+    try {
+      await onSave({
+        ...formData,
+        images: imagePreviews,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -327,12 +387,12 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
               />
             </div>
             <p className="text-xs text-stone-500 mt-2">
-              First image will be the main product image. Drag to reorder. Recommended: 800x800px JPG/PNG.
+              First image will be the main product image. Recommended: 800x800px JPG/PNG.
             </p>
           </div>
 
           {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Product Name *
@@ -383,7 +443,7 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
                   type="number"
                   step="0.01"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                   className="w-full pl-7 pr-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   required
                 />
@@ -411,7 +471,7 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
               <input
                 type="number"
                 value={formData.inventory}
-                onChange={(e) => setFormData({ ...formData, inventory: parseInt(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, inventory: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 required
               />
@@ -419,7 +479,7 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
           </div>
 
           {/* Category & Farm */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Category *
@@ -430,6 +490,7 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
                 className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 required
               >
+                {categories.length === 0 && <option value="">No categories available</option>}
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -462,7 +523,7 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
           </div>
 
           {/* Order Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Order Deadline
@@ -484,36 +545,6 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
                 value={formData.deliveryDate || ''}
                 onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
                 placeholder="e.g., 2/20/2026"
-                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-
-          {/* Ratings (for display) */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
-                Rating (1-5)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                value={formData.rating || ''}
-                onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
-                Review Count
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.reviewCount || ''}
-                onChange={(e) => setFormData({ ...formData, reviewCount: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
@@ -546,13 +577,16 @@ function ProductModal({ product, onSave, onClose }: ProductModalProps) {
               type="button"
               onClick={onClose}
               className="px-4 py-2 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition-colors"
+              disabled={saving}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
+              disabled={saving}
+              className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {product ? 'Save Changes' : 'Add Product'}
             </button>
           </div>
