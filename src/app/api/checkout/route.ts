@@ -3,7 +3,7 @@ import { stripe } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
-    const { items, customerEmail } = await request.json();
+    const { items, customerEmail, paymentMethod } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -11,6 +11,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Calculate total
+    const totalAmount = items.reduce((sum: number, item: { price: number; quantity: number }) => 
+      sum + Math.round(item.price * 100) * item.quantity, 0
+    );
 
     // Create line items for Stripe
     const lineItems = items.map((item: {
@@ -21,7 +26,7 @@ export async function POST(request: NextRequest) {
       image?: string;
     }) => ({
       price_data: {
-        currency: 'usd',
+        currency: 'sgd',
         product_data: {
           name: item.name,
           images: item.image ? [item.image] : [],
@@ -31,7 +36,30 @@ export async function POST(request: NextRequest) {
       quantity: item.quantity,
     }));
 
-    // Create Stripe checkout session
+    // PayNow payment flow (Stripe Payment Intent with PayNow)
+    if (paymentMethod === 'paynow') {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount,
+        currency: 'sgd',
+        payment_method_types: ['paynow'],
+        metadata: {
+          customerEmail: customerEmail || '',
+          items: JSON.stringify(items.map((i: { id: string; name: string; quantity: number }) => ({
+            id: i.id,
+            name: i.name,
+            quantity: i.quantity
+          }))),
+        },
+      });
+
+      return NextResponse.json({
+        type: 'paynow',
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    }
+
+    // Card payment flow (Stripe Checkout Session)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -48,7 +76,7 @@ export async function POST(request: NextRequest) {
             type: 'fixed_amount',
             fixed_amount: {
               amount: 0,
-              currency: 'usd',
+              currency: 'sgd',
             },
             display_name: 'Free shipping',
             delivery_estimate: {
@@ -68,7 +96,7 @@ export async function POST(request: NextRequest) {
             type: 'fixed_amount',
             fixed_amount: {
               amount: 2500,
-              currency: 'usd',
+              currency: 'sgd',
             },
             display_name: 'Express shipping',
             delivery_estimate: {
@@ -86,7 +114,7 @@ export async function POST(request: NextRequest) {
       ],
     });
 
-    return NextResponse.json({ sessionId: session.id, url: session.url });
+    return NextResponse.json({ type: 'card', sessionId: session.id, url: session.url });
   } catch (error) {
     console.error('Stripe checkout error:', error);
     return NextResponse.json(
