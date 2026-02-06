@@ -70,6 +70,34 @@ export default function HomePage() {
       {/* Hero Slider */}
       <HeroSlider banners={banners} />
 
+      {/* Featured Video Section */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-stone-50 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <p className="text-amber-700 text-sm uppercase tracking-[0.2em] mb-3 font-medium">From Our Farm</p>
+            <h2 className="font-serif text-3xl md:text-4xl text-stone-900 mb-4">
+              Experience the Harvest
+            </h2>
+            <p className="text-stone-600 font-light max-w-2xl mx-auto">
+              Watch how our premium Japanese fruits are carefully cultivated and harvested at the peak of perfection.
+            </p>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-stone-300/50 border border-stone-200">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full aspect-video object-cover"
+            >
+              <source src="/videos/hero-video.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/30 via-transparent to-transparent pointer-events-none" />
+          </div>
+        </div>
+      </section>
+
       {/* Featured By Section - More elegant */}
       <section className="py-16 bg-white overflow-hidden border-b border-stone-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

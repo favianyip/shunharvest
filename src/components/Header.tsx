@@ -20,6 +20,16 @@ const navigation = [
       { name: 'Artisanal Items', href: '/shop/artisanal-items' },
     ],
   },
+  {
+    name: 'Wholesaler',
+    href: '/wholesaler',
+    children: [
+      { name: 'Bulk Orders', href: '/wholesaler/bulk-orders' },
+      { name: 'Export Overseas', href: '/wholesaler/export' },
+      { name: 'Strawberry Export', href: '/wholesaler/strawberries' },
+      { name: 'Partnership Inquiry', href: '/wholesaler/partnership' },
+    ],
+  },
   { name: 'Our Story', href: '/our-story' },
   {
     name: 'Fruit Blog',
